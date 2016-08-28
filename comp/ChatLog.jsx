@@ -8,6 +8,9 @@ var MsgType = require('store/Chat.js').MsgType;
 var Log = require('act/Log.js');
 var findDOMNode = require('react-dom').findDOMNode;
 
+
+var ExpandableImage= require('comp/ExpandableImage.jsx');
+
 function getLastId(log){
 	return log.length > 0 ? log[log.length - 1].id : NaN;
 }
@@ -109,14 +112,18 @@ module.exports = React.createClass({
 		res.push(onRest(text));
 		return res;
 	},
-	renderMessage: function(message){
-		// Add links.
+	
+	renderMessage: function(message, entryID){
+		
 		return this.addTags(message, /(\b(www\.|(https?|ftp|file|spring|zk):\/\/)([^\s(]*[^\s.,;:!()]|\([^)]*\))+)/ig,
 		function(text){
 			var match;
+			
 			if ((match = text.match(/(spring|zk):\/\/@join_player:(.+)/))) {
 				return <a key={_.uniqueId('t')} href='#'
 					onClick={_.partial(this.handleJoinUserBattle, match[2])}>{text}</a>;
+			} else if ((match = text.match(/\.(bmp|gif|ico|jpg|jpeg|png)/))) {
+				return <ExpandableImage key={'_expandableImage_' + entryID} src={text} />;
 			} else {
 				return <a target='_blank' key={_.uniqueId('t')} href={text}>{text}</a>;
 			}
@@ -151,7 +158,7 @@ module.exports = React.createClass({
 		return <div className="chatEntry" key={entry.id}>
 			<div className="chatTimestamp">{timestampHtml}</div>
 			<div className={authorClass}>{authorHtml}</div>
-			<div className={messageClass}>{this.renderMessage(message)}</div>
+			<div className={messageClass}>{this.renderMessage(message, entry.id)}</div>
 		</div>;
 	},
 	
