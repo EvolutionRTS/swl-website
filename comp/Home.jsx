@@ -61,13 +61,13 @@ module.exports = React.createClass({
 				<div className="section group">
 					<div className="col span_1_of_2">
 						<div className="entry">
-							<h1 onClick={this.handleSandbox} className="menubutton aligncentertext">Sandbox</h1>
 							<h1 onClick={this.handleMultiplayer} className="menubutton aligncentertext">Multiplayer</h1>
 							<h1 className="menubutton aligncentertext"><a href="https://github.com/EvolutionRTS/Evolution-RTS/wiki" title="How to play"> How to play</a></h1>
 							<h1 onClick={_.partial(this.props.onSelect, 'settings')} className="menubutton aligncentertext">Settings</h1>
 							<h1 onClick={_.partial(this.props.onSelect, 'help')} className="menubutton aligncentertext">Help</h1>
-							<h1 className="menubutton aligncentertext"><a href="http://www.forums.evolutionrts.info" title="Community Forums">Community</a></h1>
-							<h1 className="menubutton aligncentertext"><a href="http://www.evolutionrts.info" title="Evolution RTS Website">Website</a></h1>
+							<h1 className="menubutton aligncentertext"><a href="https://discord.gg/WUbAs2f" title="Community Discord Server" >Community Discord Server</a></h1>
+							<h1 className="menubutton aligncentertext"><a href="http://www.forums.evolutionrts.info" title="Community Forums">Community Forums</a></h1>
+							<h1 className="menubutton aligncentertext"><a href="http://www.evolutionrts.info" title="Evolution RTS Website">Evolution RTS Website</a></h1>
 						</div>
 					</div>
 					<div className="col span_1_of_2">
