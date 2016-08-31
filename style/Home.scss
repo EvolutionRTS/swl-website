@@ -82,6 +82,11 @@
 		max-height: 650px;
 		overflow-y: auto;
 	}
+	
+	.entry iframe {
+		border: 0px solid #000;
+		border-radius: 5px;
+	}
 
 	.entry-background {
 		background-color:rgba(0,0,0,0.5);
