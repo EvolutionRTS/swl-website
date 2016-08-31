@@ -395,7 +395,7 @@ module.exports = function(){ return Reflux.createStore({
 			});
 		},
 		"BATTLECLOSED": function(raw, id){
-			if (id === this.currentBattle.id)
+			if (this.currentBattle && id === this.currentBattle.id)
 				this.handlers['LEFTBATTLE'].bind(this)('LEFTBATTLE ' + id + ' ' + this.nick, id, this.nick);
 			delete this.battles[id];
 		},
@@ -457,6 +457,17 @@ module.exports = function(){ return Reflux.createStore({
 			if (!this.currentBattle)
 				return true;
 			delete this.currentBattle.boxes[number];
+		},
+		"SETSCRIPTTAGS": function(raw){
+			if (!this.currentBattle)
+				return true;
+			_.extend(this.currentBattle.options, raw.split('\t').reduce(function(acc, val){
+				var match;
+				var val = val.split('=');
+				if (match = val[0].match(/game\/modoptions\/(\w+)/))
+					acc[match[1]] = val[1];
+				return acc;
+			}, {}));
 		},
 	},
 	message: function(msg){
