@@ -5,6 +5,7 @@
 // Chat topic box.
 
 .chatTopic
+	background-color: rgba(0, 0, 0, 0.5);
 	border-bottom: 1px solid rgba(0, 0, 0, 0.5);
 	overflow: auto
 	div
@@ -15,7 +16,7 @@
 	.topicInfo
 		font-size: 0.9em
 		text-align: right
-		color: #776
+		color: #fafafa
 
 // Channel tabs.
 
@@ -30,7 +31,7 @@
 	margin: 0
 	li
 		cursor: pointer
-		color: #999
+		color: #fafafa
 		margin: 0.3em 0.1em
 	li:hover
 		color: white
@@ -66,7 +67,9 @@
 		+setHeight(100%)
 		float: left
 	.chatLeft
+		background-color: rgba(0, 0, 0, 0.5);
 		border-right: 1px solid rgba(0, 0, 0, 0.5);
+		border-radius: 5px 0px 0px 5px;
 		width: $tabsWidth
 		.chatTabs
 			+setHeight(calc(100% - #{$chatInputHeight}))
