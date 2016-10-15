@@ -67,13 +67,13 @@ module.exports = React.createClass({
 							<h1 onClick={_.partial(this.props.onSelect, 'help')} className="menubutton aligncentertext">Help</h1>
 							<h1 className="menubutton aligncentertext"><a href="https://discord.gg/WUbAs2f" title="Community Discord Server" target="_blank">Community Discord Server</a></h1>
 							<h1 className="menubutton aligncentertext"><a href="http://www.forums.evolutionrts.info" title="Community Forums" target="_blank">Community Forums</a></h1>
-							<h1 className="menubutton aligncentertext"><a href="http://www.evolutionrts.info" title="Evolution RTS Website" target="_blank">Evolution RTS Website</a></h1>
+							<h1 className="menubutton aligncentertext"><a href="https://www.evolutionrts.info" title="Evolution RTS Website" target="_blank">Evolution RTS Website</a></h1>
 						</div>
 					</div>
 					<div className="col span_1_of_2">
 						<div className="entry entry-background">
 							{/* There will be a loop here pulling in rss so the next bit is just for examples */}
-							<div class='embed-container'><iframe src='http://www.evolutionrts.info/iframenews/' name='EvoNews' scrolling='yes' frameborder='0' marginheight='0px' marginwidth='0px' height='500px' width='550px'></iframe></div>
+							<div class='embed-container'><iframe src='https://www.evolutionrts.info/iframenews/' name='EvoNews' scrolling='yes' frameborder='0' marginheight='0px' marginwidth='0px' height='500px' width='550px'></iframe></div>
 							
 						</div>
 					</div>
