@@ -21,7 +21,11 @@
 		margin-right: auto;
 		max-width: 1200px;
 	}
-
+	
+	.menubutton {
+		cursor: pointer;
+	}
+	
 	.menubutton > a {
 		color: white;
 	}
