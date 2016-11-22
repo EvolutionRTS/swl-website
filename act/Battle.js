@@ -14,6 +14,7 @@ module.exports = Reflux.createActions([
 
 	"joinMultiplayerBattle", // battle ID [, password]
 	"leaveMultiplayerBattle",
+	"createMultiplayerBattle", // mode, title [, password]
 
 	"hostBattle",
 
@@ -23,4 +24,8 @@ module.exports = Reflux.createActions([
 	// box uses [0,1] floats and CSS positioning convention.
 	"addMultiplayerBox", // team, box { top, left, bottom, right }
 	"removeMultiplayerBox", // team
+
+	"requestConnectSpring", // battle ID
+	"requestMatchmaking", //queues([name1, name2, name3])
+	"acceptMatch", //ready(bool)
 ]);

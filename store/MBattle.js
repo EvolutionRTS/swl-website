@@ -32,6 +32,7 @@ module.exports = function(gameInfoStore, serverStore, chatStore, processStore){ 
 		this.spads = false;
 		this.playersInRoom = 0;
 		this.scriptPassword = null;
+		this.serverStore = serverStore;
 		this.listenTo(gameInfoStore, 'updateGameInfo', 'updateGameInfo');
 		this.listenTo(serverStore, 'updateServer', 'updateServer');
 		this.listenTo(chatStore, 'updateChat', 'updateChat');
@@ -54,6 +55,7 @@ module.exports = function(gameInfoStore, serverStore, chatStore, processStore){ 
 		if (!data.currentBattle)
 			return;
 		var newState = {
+			battleId: data.currentBattle.id,
 			map: data.currentBattle.map,
 			game: data.currentBattle.game,
 			engine: data.currentBattle.engine,
@@ -64,7 +66,7 @@ module.exports = function(gameInfoStore, serverStore, chatStore, processStore){ 
 			port: data.currentBattle.port,
 			myName: data.nick,
 			founder: data.currentBattle.founder,
-			inProgress: !!data.users[data.currentBattle.founder].inGame,
+			inProgress: ('running' in data.currentBattle) ? data.currentBattle.running : !!data.users[data.currentBattle.founder].inGame,
 		};
 
 		// Hack to replace removered zero-k hack at https://github.com/springfiles/upq/commit/11c82e.
@@ -84,7 +86,8 @@ module.exports = function(gameInfoStore, serverStore, chatStore, processStore){ 
 		var newMap = this.map !== newState.map;
 
 		if (newState.inProgress && this.inProgress !== newState.inProgress &&
-				Team.getTeam(this.teams, this.myName) > 0) {
+				Team.getTeam(this.teams, this.myName) > 0 &&
+				this.serverStore.storeName !== 'ZkLobbyServer') {
 			this.launchSpring();
 		}
 
@@ -148,10 +151,12 @@ module.exports = function(gameInfoStore, serverStore, chatStore, processStore){ 
 			Chat.sayBattle(message, true);
 	},
 	saidBattle: function(user, message, me){
-		if (user !== this.founder || !me)
+		if ((user !== 'Nightwatch' && user !== this.founder) || !me)
 			return;
 		var match;
-		// Springie
+		// Springie - note current format is:
+		// "Nightwatch Poll: DO THING ? [!y=1/1, !n=0/1]"
+		// "Nightwatch Poll: DO THING ? [END:SUCCESS]"
 		if ( (match = message.match(/^Poll: (.*) \[(END.*|!y=([0-9]+)\/([0-9]+), !n=([0-9]+)\/([0-9]+))\]$/)) ) {
 			if (match[2].match(/END/)) {
 				this.vote = null;
@@ -196,7 +201,11 @@ module.exports = function(gameInfoStore, serverStore, chatStore, processStore){ 
 		if (!(this.hasEngine && this.hasGame && this.hasMap))
 			return;
 		if (this.inProgress) {
-			this.launchSpring();
+			if (this.serverStore.storeName === 'ZkLobbyServer') {
+				Battle.requestConnectSpring(this.battleId);
+			} else {
+				this.launchSpring();
+			}
 		} else {
 			Chat.sayBattle(this.spads ? '!cv start' : '!start');
 		}

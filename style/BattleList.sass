@@ -36,6 +36,22 @@
 		height: 3em
 	td.num
 		text-align: center
+	.dialog
+		button
+			margin: 0.8em auto 0 auto
+			display: block
+			font-size: 1.4em
+			font-weight: bold
+			border: 1px solid #5B7A7B
+			color: #7CDFE2
+			padding: 0.5em 1.5em
+			border-radius: 0.8em
+		input
+			width: 150px
+		.selectBox
+			width: 154px
+		.queueSelector
+			width: 25px
 	.infoBox
 		background-color: rgba(0, 0, 0, 0.5);
 		border-radius: 0px 5px 5px 0px;
@@ -52,8 +68,7 @@
 				height: 1em
 				margin-right: 0.2em
 		.userList
-			-webkit-flex: 1
-			flex: 1
+			+flexItem(1)
 			min-height: 6em
 			position: relative
 			overflow-y: auto
@@ -94,27 +109,15 @@
 // Flexboxes
 .battleList
 	.flexItem
-		-webkit-flex: 0 1 auto
-		flex: 0 1 auto
+		+flexItem
 
 	.flexWrapper
+		+flexWrapper(column)
 		height: 100%
 		width: 100%
-		display: -webkit-flex
-		display: flex
-		-webkit-flex-direction: column
-		flex-direction: column
-		-webkit-justify-content: flex-start
-		justify-content: flex-start
-		-webkit-align-items: stretch
-		align-items: stretch
-		-webkit-align-content: stretch
-		align-content: stretch
 
 // Layout
 .battleList
-	// TODO: This ruins it on low horizontal resolutions, convert to flexboxes.
-	$filterHeight: 6em
 	$infoWidth: 17em
 	height: 100%
 	> *
@@ -122,10 +125,13 @@
 		float: left
 	.main
 		width: calc(100% - #{$infoWidth})
+		+flexWrapper(column)
 	.filterBox
-		+setHeight($filterHeight)
+		+flexItem
+		// Fix for broken-ass QWebKit flex.
+		min-height: 4em
 	.tableWrapper
-		+setHeight(calc(100% - #{$filterHeight}))
+		+flexItem(1)
 		overflow: auto
 		position: relative
 	table

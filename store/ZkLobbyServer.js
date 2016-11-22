@@ -16,6 +16,7 @@ var Chat = require('act/Chat.js');
 var Log = require('act/Log.js');
 var Team = require('util/Team.js');
 var Process = require('act/Process.js');
+var Sound = require('act/Sound.js');
 
 var LoginResponse = {
 	Ok: 0,
@@ -43,6 +44,7 @@ function extendUpdate(dest, src) {
 
 module.exports = function(){ return Reflux.createStore({
 
+	storeName: 'ZkLobbyServer',
 	listenables: [Server, require('act/Chat.js'), require('../act/Battle.js')],
 	mixins: [require('store/LobbyServerCommon.js')],
 
@@ -53,6 +55,7 @@ module.exports = function(){ return Reflux.createStore({
 		// Set correct this in handlers.
 		this.handlers = _.mapValues(this.handlers, function(f){ return f.bind(this); }, this);
 	},
+	
 	dispose: function(){
 		clearInterval(this.pingInterval);
 		this.stopListeningToAll();
@@ -121,6 +124,11 @@ module.exports = function(){ return Reflux.createStore({
 			this.leaveMultiplayerBattle();
 		this.send('JoinBattle', { BattleID: id, Password: password || null });
 	},
+	createMultiplayerBattle: function(mode, name, password){
+		if (this.currentBattle)
+			this.leaveMultiplayerBattle();
+		this.send('OpenBattle', {"Header":{"Mode":mode,"Password":password || '',"Title":name}});
+	},
 	leaveMultiplayerBattle: function(){
 		this.send('LeaveBattle', { BattleID: this.currentBattle && this.currentBattle.id });
 	},
@@ -130,7 +138,6 @@ module.exports = function(){ return Reflux.createStore({
 			AllyNumber: s.ally,
 			IsSpectator: s.spectator,
 			Sync: ('synced' in s ? (s.synced ? 1 : 2) : undefined),
-			TeamNumber: s.team,
 		});
 		if ('spectator' in s)
 			this.specOnJoin = s.spectator;
@@ -147,31 +154,24 @@ module.exports = function(){ return Reflux.createStore({
 	removeMultiplayerBot: function(name){
 		this.send('RemoveBot', { Name: name });
 	},
-
-	addMultiplayerBox: function(team, box){
-		this.send('SetRectangle', { Number: team - 1, Rectangle: {
-			Top: Math.round(box.top * 200),
-			Left: Math.round(box.left * 200),
-			Bottom: Math.round((1 - box.bottom) * 200),
-			Right: Math.round((1 - box.right) * 200),
-		}});
+	requestConnectSpring: function(battleId){
+		this.sentLaunchRequest = true;
+		this.send('RequestConnectSpring', { BattleID: battleId });
 	},
-	removeMultiplayerBox: function(team){
-		this.send('SetRectangle', { Number: team - 1, Rectangle: null });
+	requestMatchmaking: function(queues){
+		this.send('MatchMakerQueueRequest', { Queues: queues });
+	},
+	acceptMatch: function(ready){
+		this.send('AreYouReadyResponse', {"Ready" : ready});
+		this.awaitingAccept = false;
+		this.triggerSync();
 	},
 
 	// Not action listeners.
 
 	pingPong: function(){
-		if (this.lostPings > 4){
-			this.lostPings = 0;
-			Log.errorBox('Lost connection to server. Trying to reconnect...');
-			Server.disconnect();
-			Server.connect();
-		} else if (this.connection === this.ConnectionState.CONNECTED){
-			this.send('Ping', {});
-			this.lostPings++;
-		}
+		// TODO: This leaves us with no way to detect lost connection.
+		this.send('Ping', {});
 	},
 	login: function(){
 		if (this.validateLoginPassword(Settings.name, Settings.password)){
@@ -207,7 +207,7 @@ module.exports = function(){ return Reflux.createStore({
 		// LOGIN
 
 		// Hi!
-		"Welcome": function(){
+		"Welcome": function(msg){
 			if (this.registering){
 				if (this.validateLoginPassword(this.registering.name, this.registering.password)){
 					this.send('Register', {
@@ -218,6 +218,13 @@ module.exports = function(){ return Reflux.createStore({
 			} else {
 				this.login();
 			}
+			var zklsVersion = msg.Version;
+			if (msg.Engine){
+				var engine = msg.Engine;
+				engine.match(/^[0-9.]+-[0-9]+-g[a-f0-9]+$/) && (engine += ' develop');
+				Process.downloadEngine(engine);
+			}
+			msg.Game && Process.downloadGame(msg.Game);
 			return true;
 		},
 		"LoginResponse": function(msg){
@@ -264,7 +271,11 @@ module.exports = function(){ return Reflux.createStore({
 				away: user.IsAway,
 				awaySince: user.AwaySince && new Date(user.AwaySince),
 				lobbyVersion: user.LobbyVersion || '',
+				elo: user.EffectiveMmElo || 0,
+				level: user.Level || 0,
+				battleId: user.BattleID || null,
 			};
+			var oldBattleId = this.users[user.Name] && this.users[user.Name].battleId;
 
 			if (newUser.lobbyVersion.match(/Spring Web Lobby/))
 				newUser.lobby = 'swl';
@@ -277,6 +288,13 @@ module.exports = function(){ return Reflux.createStore({
 				extendUpdate(this.users[user.Name], newUser);
 			else
 				this.users[user.Name] = newUser;
+
+			if (user.BattleID !== oldBattleId) {
+				if (user.BattleID == null)
+					this.handlers.LeftBattle({ User: user.Name, BattleID: oldBattleId });
+				else
+					this.handlers.JoinedBattle({ User: user.Name, BattleID: user.BattleID });
+			}
 		},
 		"UserDisconnected": function(msg){
 			if (msg.Name in this.users) {
@@ -294,7 +312,11 @@ module.exports = function(){ return Reflux.createStore({
 
 		"JoinChannelResponse": function(msg){
 			if (msg.Success) {
-				this.channels[msg.ChannelName] = { name: msg.ChannelName, users: {} };
+				this.channels[msg.ChannelName] = {
+					name: msg.ChannelName,
+					userCount: msg.UserCount,
+					users: {}
+				};
 			} else {
 				Log.errorBox('Couldn\'t join channel ' + msg.ChannelName + ': ' +
 					msg.Reason);
@@ -305,11 +327,11 @@ module.exports = function(){ return Reflux.createStore({
 				acc[name] = this.getOrCreateUser(name);
 				return acc;
 			}.bind(this), {}));
-			if (msg.Channel.Topic) {
+			if (msg.Channel.Topic && _.size(msg.Channel.Topic) > 0 /* ignore {} topics */) {
 				this.channels[msg.ChannelName].topic = {
-					text: msg.Channel.Topic,
-					author: msg.Channel.TopicSetBy,
-					time: new Date(), // XXX new Date(parseInt(args[2]) * 1000)
+					text: msg.Channel.Topic.Text || '',
+					author: msg.Channel.Topic.SetBy || '',
+					time: new Date(msg.Channel.Topic.SetDate || ''),
 				};
 			} else {
 				this.channels[msg.ChannelName].topic = null;
@@ -363,9 +385,11 @@ module.exports = function(){ return Reflux.createStore({
 				passworded: "Password" in battle ? !!battle.Password : undefined,
 				maxPlayers: battle.MaxPlayers,
 				spectatorCount: battle.SpectatorCount,
+				playerCount: battle.PlayerCount,
 				founder: battle.Founder,
 				ip: battle.Ip,
 				port: battle.Port,
+				running: battle.IsRunning,
 			});
 		},
 		"BattleRemoved": function(msg){
@@ -374,13 +398,17 @@ module.exports = function(){ return Reflux.createStore({
 		"JoinedBattle": function(msg){
 			Team.add(this.battles[msg.BattleID].teams, this.getOrCreateUser(msg.User), 1);
 			this.users[msg.User].battle = msg.BattleID;
-			if (msg.ScriptPassword)
-				this.users[this.nick].scriptPassword = msg.ScriptPassword;
 			if (msg.User === this.nick) {
 				this.currentBattle = this.battles[msg.BattleID];
 				if (this.specOnJoin)
 					this.updateMultiplayerStatus({ spectator: true });
 			}
+		},
+		"JoinBattleSuccess": function(msg){
+			var handlers = this.handlers;
+			msg.Players.forEach(function(p){ handlers.UpdateUserBattleStatus(p); });
+			msg.Bots.forEach(function(p){ handlers.UpdateBotStatus(p); });
+			handlers.SetModOptions(msg);
 		},
 		"LeftBattle": function(msg){
 			Team.remove(this.battles[msg.BattleID].teams, msg.User);
@@ -401,7 +429,6 @@ module.exports = function(){ return Reflux.createStore({
 			var user = this.users[msg.Name] || { name: msg.Name };
 			extendUpdate(user, {
 				synced: ('Sync' in msg ? msg.Sync === 1 : undefined),
-				team: msg.TeamNumber,
 				serverAllyNumber: msg.AllyNumber, // internal for the store
 				side: 0, // No protocol support yet.
 				botType: msg.AiLib,
@@ -430,26 +457,82 @@ module.exports = function(){ return Reflux.createStore({
 		"RemoveBot": function(msg){
 			this.handlers.LeftBattle({ BattleID: this.currentBattle.id, User: msg.Name });
 		},
-		"SetRectangle": function(msg){
-			if (!this.currentBattle)
-				return true;
-			if (msg.Rectangle) {
-				// ZK protocol kept the magic [0,200] range.
-				this.currentBattle.boxes[msg.Number] = {
-					top: msg.Rectangle.Top / 200,
-					left: msg.Rectangle.Left / 200,
-					bottom: 1 - msg.Rectangle.Bottom / 200,
-					right: 1 - msg.Rectangle.Right / 200,
-				};
-			} else {
-				delete this.currentBattle.boxes[msg.Number];
-			}
-		},
 		"SetModOptions": function(msg){
 			if (!this.currentBattle)
 				return true;
 			this.currentBattle.options = msg.Options;
 		},
+		"ConnectSpring": function(msg){
+			/*
+				public string Engine { get; set; }
+				public string Ip { get; set; }
+				public int Port { get; set; }
+				public string Map { get; set; }
+				public string Game { get; set; }
+				public string ScriptPassword { get; set; }
+			*/		
+			
+			
+			var script = {
+				isHost: 0,
+				hostIp: msg.Ip,
+				hostPort: msg.Port,
+				myPlayerName: this.nick,
+				myPasswd: msg.ScriptPassword,
+			};
+			if (this.sentLaunchRequest || !this.currentBattle || Team.getTeam(this.currentBattle.teams, this.nick) > 0){
+				// TODO: move this logic to some util function called FixZkNihEngineNames
+				if (msg.Engine.match(/^[0-9.]+-[0-9]+-g[a-f0-9]+$/)) // no branch suffix, add develop
+					msg.Engine += ' develop';             
+				Process.launchSpringScript(msg.Engine, { game: script });
+			}
+			this.sentLaunchRequest = false;
+			
+		},
+		
+		// match maeking
+		"MatchMakerSetup": function(msg){
+			this.queues = msg.PossibleQueues;
+		},
+		
+		"MatchMakerStatus": function(msg){
+			var enabled = msg.MatchMakerEnabled;
+			var queues = msg.JoinedQueues;
+			var queueCounts = msg.QueueCounts;
+			var message = msg.Text || ""; 
+
+			_.extend(this.queueCounts, queueCounts);
+			
+			if (queues) {
+				this.activeQueues = queues;
+				if (queues.length == 0){
+					this.awaitingAccept = false;
+				}
+			}else if (!enabled){
+				this.activeQueues = [];
+			}
+		},
+		"AreYouReady": function(msg){
+			this.awaitingAccept = true;
+			Sound.playRing();
+			
+			//TODO
+			var timeRemaining = msg.SecondsRemaining; // -> display countdown
+		},
+		"AreYouReadyUpdate": function(msg){
+			var ready = msg.ReadyAccepted || msg.LikelyToPlay; 
+			
+			this.awaitingAccept = !ready;
+			!ready && Sound.playRing();
+		},
+		"AreYouReadyResult": function(msg){
+			this.awaitingAccept = false;
+			
+			//TODO
+			var starting = msg.IsBattleStarting; // -> display battle failed when false
+			var banned = msg.AreYouBanned; // -> display 5 minute MM ban
+		},
+		
 		// remote control
 		"SiteToLobbyCommand": function(msg){
 			var springLink = msg.Command;

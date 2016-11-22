@@ -36,9 +36,20 @@ module.exports = React.createClass({
 	renderInfoBox: function(){
 		var user = this.props.user;
 		var now = new Date();
+		var flagImgSrc;
+		if (user.country){
+			try {
+				flagImgSrc = require('img/flags/' + user.country.toLowerCase() + '.png');
+			} catch(e) {
+				flagImgSrc = require('img/flags/unknown.png');
+			}
+		}
 		return <ModalWindow title="User info" onClose={this.handleClose}>
 		<div className="userInfoBox">
-			<h1>{user.name}</h1>
+			<h1>{user.country &&
+					<img src={flagImgSrc} key="country" title={user.country} />}
+				&nbsp;{user.name}
+			</h1>
 			{this.props.battles && this.props.battles[user.battle] &&
 				<p><img src={require('img/battlehalf.png')} />In
 				battle {this.props.battles[user.battle].title}.</p>}
@@ -48,6 +59,12 @@ module.exports = React.createClass({
 			{user.away && user.awaySince &&
 				<p><img src={require('img/away.png')} />Away
 				for {timeDifference(now, user.awaySince)}</p>}
+			<table>
+			{user.elo > 0 &&
+				<tr><td>Rating:&nbsp;</td><td>{user.elo}</td></tr>}
+			{user.level &&
+				<tr><td>Level:&nbsp;</td><td>{user.level}</td></tr>}
+			</table>
 			<p>
 				<button onClick={_.partial(Chat.openPrivate, user.name)}>
 					Open private conversation
@@ -68,18 +85,17 @@ module.exports = React.createClass({
 		var frontPics = [];
 		var backPics = [];
 
-		// Country
-		if (user.country) {
-			var flagImgSrc;
-			try {
-				flagImgSrc = require('img/flags/' + user.country.toLowerCase() + '.png');
-			} catch(e) {
-				flagImgSrc = require('img/flags/unknown.png');
-			}
-			frontPics.push(<img
-				src={flagImgSrc}
-				key="country"
-			/>);
+			
+		// XP / ELO symbols
+		if (user.elo > 0 && user.level >= 0){ //zkls
+			var level = Math.max(0, Math.min(7, Math.floor(Math.log(user.level / 30 + 1) * 4.2)));
+			var skill = Math.max(0, Math.min(7, Math.floor((user.elo - 1000) / 200)));
+			frontPics.push(<img src={require('img/ranks/' + level + '_' + skill + '.png')} key="rank" />);
+		}
+		else if (user.timeRank >= 0) { //spring
+			var level = Math.min(7, user.timeRank);
+			var skill = 3;
+			frontPics.push(<img src={require('img/ranks/' + level + '_' + skill + '.png')} key="rank" />);
 		}
 
 		// Is a bot?
@@ -145,6 +161,23 @@ module.exports = React.createClass({
 			backPics.push(<img src={require('img/linux.png')} title="Linux" key="os" />);
 		else if (user.os === 'mac')
 			backPics.push(<img src={require('img/mac.png')} title="MacOS" key="os" />);
+
+		if (user.country) {
+			var flagImgSrc;
+			try {
+				flagImgSrc = require('img/flags/' + user.country.toLowerCase() + '.png');
+			} catch(e) {
+				flagImgSrc = require('img/flags/unknown.png');
+			}
+			backPics.push(<img
+				src={flagImgSrc}
+				key="country"
+				className="flag"
+				title={user.country}
+			/>);
+		}
+		
+		
 
 		return <li className="userItem">
 			<div onClick={this.handleClick} className="content">

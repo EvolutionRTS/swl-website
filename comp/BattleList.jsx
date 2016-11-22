@@ -15,13 +15,15 @@ var Team = require('util/Team.js');
 var ModalWindow = require('comp/ModalWindow.jsx');
 var Settings = require('store/Settings.js');
 var UserList = require('comp/UserList.jsx');
+var SelectBox = require('comp/SelectBox.jsx');
 var humanizedTimeDifference = require('util').humanizedTimeDifference;
+var Sound = require('act/Sound.js');
 
 module.exports = React.createClass({
 	displayName: 'BattleList',
 	mixins: [
 		require('react-addons-linked-state-mixin'),
-		SPM.connect('serverStore', '', ['battles', 'users']),
+		SPM.connect('serverStore', '', ['battles', 'users', 'queues', 'activeQueues', 'queueCounts']),
 		SPM.connect('gameInfoStore', '', ['maps']),
 	],
 	getInitialState: function(){
@@ -34,6 +36,14 @@ module.exports = React.createClass({
 			showOther: false,
 			passwordInput: null,
 			passwordBattleId: 0,
+			displayingMM: false,
+			mmQueueSelection: [],
+			displayingCreate: false,
+			createPasswordInput: null,
+			createTitleInput: Settings.name + "'s " +
+				_.sample(['', '', 'cool', 'secret']) + ' ' +
+				_.sample(['room', 'battle', 'game', 'clubhouse']),
+			createTypeInput: 0,
 		};
 	},
 	componentDidMount: function(){
@@ -65,6 +75,30 @@ module.exports = React.createClass({
 	},
 	cancelPasswordedJoin: function(){
 		this.setState({ passwordInput: null });
+	},
+	handleCloseCreate: function(){
+		this.setState({ displayingCreate: false });
+	},
+	handleCreate: function(){
+		this.setState({ displayingCreate: true });
+	},
+	handleCloseMM: function(){
+		this.setState({ displayingMM: false });
+	},
+	handleMM: function(){
+		this.setState({ displayingMM: true });
+	},
+	queueFilter: function(q){
+		return !!this.state['mmQueueSelection' + q];
+	},
+	handleJoinMM: function(){
+		this.handleCloseMM();
+		var queueNames = this.state.queues.map(function(q){return q.Name}).filter(this.queueFilter);
+		Battle.requestMatchmaking(queueNames);
+	},
+	handleSpawn: function(){
+		this.handleCloseCreate();
+		Battle.createMultiplayerBattle(this.state.createTypeInput, this.state.createTitleInput, this.state.createPasswordInput);
 	},
 	handleSort: function(sortBy){
 		var reverse = this.state.sortBy === sortBy ? !this.state.reverse : false;
@@ -98,7 +132,8 @@ module.exports = React.createClass({
 			}
 		}.bind(this)).map(function(battle){
 			var ret = _.clone(battle);
-			ret.playerCount = Team.toList(battle.teams).length - battle.spectatorCount;
+			if (ret.playerCount == undefined)
+				ret.playerCount = Team.toList(battle.teams).length - battle.spectatorCount;
 			return ret;
 		}).sort(function(a_, b_){
 			var a = this.state.reverse ? b_[sortBy] : a_[sortBy];
@@ -108,6 +143,70 @@ module.exports = React.createClass({
 			else
 				return a === b ? 0 : (a < b ? -1 : 1);
 		}.bind(this));
+	},
+	renderMMQueue: function(q){
+		return <tr><td>
+				<input
+					type="checkbox"
+					ref={"check" + q.Name}
+					className="queueSelector"
+					key={q.Name}
+					checkedLink={this.linkState('mmQueueSelection' + q.Name)}
+				/> 
+				{q.Name} 
+			</td><td>
+				{q.Description} 
+			</td><td>
+				{this.state.queueCounts[q.Name] || 0} in queue 
+			</td></tr>
+	},
+	renderMMDialog: function(){
+		var options = this.state.queues.map(this.renderMMQueue);
+		return <ModalWindow title="Select Queues" onClose={this.handleCloseMM}>
+		<div className="dialog">
+			<table><tbody>{options}</tbody></table>
+			<p> <button onClick={_.partial(this.handleJoinMM)}>
+				{this.state.queues.map(function(q){return q.Name}).filter(this.queueFilter).length == 0 ? "Quit Matchmaking" : "Find Match"}
+			</button></p>
+		</div></ModalWindow>;
+	},
+	renderCreateDialog: function(){
+		
+		return <ModalWindow title="Create Battle" onClose={this.handleCloseCreate}>
+		<div className="dialog">
+			<table>
+			<tbody>
+			<tr>
+				<td>Title </td>
+				<td><input
+					type="text"
+					ref="battleTitle"
+					valueLink={this.linkState('createTitleInput')}
+				/></td>
+			</tr>
+			<tr>
+				<td>Game type </td>
+				<td><SelectBox valueLink={this.linkState('createTypeInput')}>
+					<div key={5}>Cooperative</div>
+					<div key={6}>Teams</div>
+					<div key={4}>FFA</div>
+					<div key={3}>1v1</div>
+					<div key={0}>Custom</div>
+				</SelectBox></td>
+			</tr>
+			<tr>
+				<td>Password </td>
+				<td><input
+					type="password"
+					ref="createPassword"
+					valueLink={this.linkState('createPasswordInput')}
+					onKeyDown={this.handlePasswordKey}
+				/></td>
+			</tr>
+			</tbody>
+			</table>
+			<p> <button onClick={_.partial(this.handleSpawn)}>Host</button></p>
+		</div></ModalWindow>;
 	},
 	render: function(){
 		var now = new Date();
@@ -122,6 +221,12 @@ module.exports = React.createClass({
 					<label>Search: <input type="text" valueLink={this.linkState('search')} /></label>
 					<label><input type="checkbox" checkedLink={this.linkState('hidePassworded')} /> Hide passworded battles</label>
 					<label><input type="checkbox" checkedLink={this.linkState('showOther')} /> Show games not selected in settings</label>
+					{this.props.serverStore.storeName === 'ZkLobbyServer' &&
+						<label><button onClick={_.partial(this.handleCreate)}>Create Battle</button></label>}
+					{this.props.serverStore.storeName === 'ZkLobbyServer' &&
+						<label><button onClick={_.partial(this.handleMM)}>
+							{(!this.state.activeQueues || this.state.activeQueues.length == 0) ? "Enter Matchmaking" : "Looking for match"}
+						</button></label>}
 				</p>
 			</div>
 
@@ -202,6 +307,8 @@ module.exports = React.createClass({
 				/>
 				<button onClick={this.handlePasswordedJoin}>Join</button>
 			</ModalWindow>}
+			{this.state.displayingCreate && this.renderCreateDialog()}
+			{this.state.displayingMM && this.renderMMDialog()}
 		</div>;
 		if (loadThumbs.length > 0)
 			GameInfo.loadMapThumbnails(loadThumbs);
