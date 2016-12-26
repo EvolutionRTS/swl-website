@@ -53,11 +53,11 @@ module.exports = {
 
 	autoJoinChannels: function(){
 		Settings.autoJoin.split('\n').forEach(function(channel){
-			if (channel.match(/^#/))
-				Chat.joinChannel(channel.slice(1));
-			else
-				Chat.openPrivate(channel);
-		});
+			// if (channel.match(/^#/))
+				// Chat.joinChannel(channel.slice(1));
+			// else
+				// Chat.openPrivate(channel);
+		// });
 	},
 	hashPassword: function(password){
 		return new Buffer(md5(password), 'hex').toString('base64');

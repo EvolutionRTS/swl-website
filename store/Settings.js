@@ -47,7 +47,7 @@ module.exports = Reflux.createStore({
 				useZkServer: { val: false, name: 'Use Zero-K server', type: 'bool' },
 			},
 			"Chat": {
-				autoJoin: { val: '#weblobby', name: 'Autojoin channels/private messages', type: 'list', desc: 'Can be changed by pressing the heart button in chat. Channels are prefixed with #.' },
+				autoJoin: { val: '', name: 'Autojoin channels/private messages', type: 'list', desc: 'Can be changed by pressing the heart button in chat. Channels are prefixed with #.' },
 				sortColors: { val: false, name: 'Sort players by rank', type: 'bool' },
 			},
 			"Games to show in battle list": {
