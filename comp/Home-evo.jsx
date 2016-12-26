@@ -63,7 +63,7 @@ module.exports = React.createClass({
 						<div className="entry entry-background">
 							<h4>Thanks for checking out Evolution RTS!</h4>
 							
-							<p>Evolution RTS has a relatively small community, but it is quite active. We use our Discord server to set up games and discuss balance. If you would like to start up a game, you can just click the link below to see if the servers are currently populated, or simply join Discord and ask if anyone is up for a game. The answer is usually yes.</p>
+							<p>Evolution RTS has a relatively small community, but it is quite active. We use our Discord server to set up games and discuss balance. If you would like to start up a game, you can just click the link below to see if the servers are currently populated, or simply join Discord and ask if anyone is up for a game. The answer is usually yes. To get the latest version, all you need to do is join a server. The Lobby will download everything you need automatically.</p>
 						</div>
 						<div className="entry">
 							<h1 onClick={this.handleMultiplayer} className="menubutton aligncentertext">Play the Game!</h1>
