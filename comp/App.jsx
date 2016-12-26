@@ -23,7 +23,7 @@ var BattleList = require('comp/BattleList.jsx');
 var Help = require('comp/Help.jsx');
 var ModalWindow = require('comp/ModalWindow.jsx');
 
-var unclosableTabs = ['home', 'chat', 'battle'];
+var unclosableTabs = ['home', 'battle'];
 
 module.exports = React.createClass({
 	displayName: 'App',
@@ -37,12 +37,15 @@ module.exports = React.createClass({
 	getInitialState: function(){
 		return {
 			selected: 'home',
-			openTabs: ['home', 'chat'],
+			openTabs: ['home'],
 			battleStore: null,
 			battleTitle: '',
 			chatAttention: false,
 			showingDownloads: false,
 		};
+	},
+	componentDidMount: function() {
+		this.listenTo(require('act/Chat.js').saidPrivate, function(){ this.handleSelect('chat'); }.bind(this));
 	},
 	getScreen: function(name){
 		switch (name){
