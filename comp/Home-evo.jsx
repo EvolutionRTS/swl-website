@@ -60,12 +60,17 @@ module.exports = React.createClass({
 				<img className="aligncenter displayblock logoimage" src={require('img/evologo.png')} width="1040px" />
 				<div className="section group">
 					<div className="col span_1_of_2">
+						<div className="entry entry-background">
+							<h4>Thanks for checking out Evolution RTS!</h4>
+							
+							<p>Evolution RTS has a relatively small community, but it is quite active. We use our Discord server to set up games and discuss balance. If you would like to start up a game, you can just click the link below to see if the servers are currently populated, or simply join Discord and ask if anyone is up for a game. The answer is usually yes.</p>
+						</div>
 						<div className="entry">
-							<h1 onClick={this.handleMultiplayer} className="menubutton aligncentertext">Multiplayer</h1>
-							<h1 className="menubutton aligncentertext"><a href="https://github.com/EvolutionRTS/Evolution-RTS/wiki" title="How to play" target="_blank"> How to play</a></h1>
+							<h1 onClick={this.handleMultiplayer} className="menubutton aligncentertext">Play the Game!</h1>
+							<h1 className="menubutton aligncentertext"><a href="https://github.com/EvolutionRTS/Evolution-RTS/wiki" title="Learn How to play" target="_blank"> How to play</a></h1>
+							<h1 className="menubutton aligncentertext"><a href="https://discord.gg/WUbAs2f" title="Community Discord Server" target="_blank">Chat (Discord)</a></h1>
 							<h1 onClick={_.partial(this.props.onSelect, 'settings')} className="menubutton aligncentertext">Settings</h1>
 							<h1 className="menubutton aligncentertext"><a href="https://discord.gg/WUbAs2f" title="Help" target="_blank">Help</a></h1>
-							<h1 className="menubutton aligncentertext"><a href="https://discord.gg/WUbAs2f" title="Community Discord Server" target="_blank">Community Discord Server</a></h1>
 							<h1 className="menubutton aligncentertext"><a href="http://www.forums.evolutionrts.info" title="Community Forums" target="_blank">Community Forums</a></h1>
 							<h1 className="menubutton aligncentertext"><a href="https://www.evolutionrts.info" title="Evolution RTS Website" target="_blank">Evolution RTS Website</a></h1>
 						</div>
