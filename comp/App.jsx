@@ -23,7 +23,7 @@ var BattleList = require('comp/BattleList.jsx');
 var Help = require('comp/Help.jsx');
 var ModalWindow = require('comp/ModalWindow.jsx');
 
-var unclosableTabs = ['home', 'battle'];
+var unclosableTabs = ['home', 'chat', 'battle'];
 
 module.exports = React.createClass({
 	displayName: 'App',
