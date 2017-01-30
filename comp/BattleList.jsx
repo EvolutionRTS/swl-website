@@ -108,17 +108,20 @@ module.exports = React.createClass({
 		var sortBy = this.state.sortBy;
 		var searchRegExp = new RegExp(this.state.search, 'i');
 		return _.values(this.state.battles).filter(function(battle){
-			if ((this.state.showOther ||
+			if ((this.state.showOther || Settings.selectedAll ||
 				Settings.selectedEvo && battle.game.match(/^Evolution RTS/) ||
 				Settings.selectedZk && battle.game.match(/^Zero-K/) ||
 				Settings.selectedBa && battle.game.match(/^Balanced Annihilation/) ||
 				Settings.selectedBa && battle.game.match(/^BA Chicken Defense/) ||
 				Settings.selectedTa && battle.game.match(/^Tech Annihilation/) ||
 				Settings.selectedXta && battle.game.match(/^XTA/) ||
-				Settings.selectedNota && battle.game.match(/^NOTA/) ||
+				Settings.selectedNota && battle.game.match(/^NOTA/i) ||
 				Settings.selectedJauria && battle.game.match(/^JauriaRTS/) ||
 				Settings.selectedS44 && battle.game.match(/^Spring: 1944/) ||
-				Settings.selectedIw && battle.game.match(/^Imperial Winter/)) &&
+				Settings.selectedIw && battle.game.match(/^Imperial Winter/) ||
+				Settings.selectedPa && battle.game.match(/^Planet (Annihilation|Defense)/) ||
+				Settings.selectedMf && battle.game.match(/^Metal Factions/)
+				) &&
 				// Matching an empty string returns a thruthy value for all strings
 				// so the default of '' matches everything.
 				_.some(_.pick(battle, ['title', 'game', 'map']), function(str){
