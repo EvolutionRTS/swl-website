@@ -51,8 +51,8 @@ module.exports = Reflux.createStore({
 				sortColors: { val: false, name: 'Sort players by rank', type: 'bool' },
 			},
 			"Games to show in battle list": {
-				selectedAll: { val: true, name: 'Always show all games', type: 'bool' },
-				selectedEvo: { val: false, name: 'Evolution RTS', type: 'bool' },
+				selectedAll: { val: false, name: 'Always show all games', type: 'bool' },
+				selectedEvo: { val: true, name: 'Evolution RTS', type: 'bool' },
 				selectedZk: { val: false, name: 'Zero-K', type: 'bool' },
 				selectedBa: { val: false, name: 'Balanced Annihilation', type: 'bool' },
 				selectedTa: { val: false, name: 'Tech Annihilation', type: 'bool' },
@@ -75,6 +75,16 @@ module.exports = Reflux.createStore({
 			_.extend(this, _.mapValues(vals, 'val'));
 		}.bind(this));
 		_.extend(this, JSON.parse(localStorage.getItem(SettingsOverride.localStorageKey)));
+
+		// This is a hotfix for selectedAll being enabled by default.
+		// Eventually it should be taken out so that those who want it can
+		// have only selectedAll enabled.
+		if (this.selectedAll && _.every(_.keys(this.settings).
+				filter(function(k){ return !!k.match(/^selected/) && k !== 'selectedAll'; }).
+				map(function(k){ return !this[k]; }.bind(this)))) {
+			this.set('selectedAll', false);
+			this.set('selectedEvo', true);
+		}
 	},
 
 	// Action handlers
