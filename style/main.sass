@@ -1,5 +1,5 @@
 @import globals
-@import chili
+//@import chili
 
 body
 	color: white
@@ -56,10 +56,12 @@ input[type="checkbox"]
 button
 	
 	font-family: $mainFont
-	background: transparent
+	background: #1f1f1f
 	background-clip: padding-box
 	color: white
 	outline: none
+	border: 1px solid gray
+	border-radius: 5px
 	&:disabled
 		color: gray
 	&:disabled:hover
@@ -67,6 +69,7 @@ button
 
 button:hover
 	text-shadow: 0 0 8px white
+	background: #147D80
 
 button:active:not(:disabled)
 	background-image: linear-gradient(to bottom, #222, #333)
@@ -89,3 +92,5 @@ button:active:not(:disabled)
 ::-webkit-scrollbar-thumb
 	
 	width: 9px
+	background-color: darkgrey
+	outline: 1px solid slategrey

@@ -56,6 +56,17 @@ module.exports = React.createClass({
 	},
 	render: function(){
 		return <div className="container">
+		
+			<div id="popup1" className="overlay">
+				<div className="popup">
+					<h2>Evolution RTS - Quickstart Tutorial</h2>
+					<a className="close" href="#popup1">&times;</a>
+					<div className="content">
+						<div className='embed-container'><iframe width='560' height='315' src='https://www.youtube.com/embed/2Q-pxnpQFKI?rel=0?ecver=1' frameborder='0' allowfullscreen></iframe></div>
+					</div>
+				</div>
+			</div>
+			
 			<div className="homeScreen">
 				<img className="aligncenter displayblock logoimage" src={require('img/evologo.png')} width="1040px" />
 				<div className="section group">
